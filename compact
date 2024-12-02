@@ -92,7 +92,6 @@ EDGECASE: You can use a spacing of 0, in which case the columns are right next t
 
 =item B<-h/--help>
 
-# TODO: Fix Print typo in the official perldoc for Pod::Usage and probably Getopt::Long since there's a copy of it there as well.
 Prints a brief help message and exits.
 
 =item B<--man>
