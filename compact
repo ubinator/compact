@@ -14,7 +14,7 @@ my %args = (
 	man => 0
 );
 
-Getopt::Long::Configure("bundling");
+Getopt::Long::Configure('posix_default', 'bundling');
 GetOptions('s|spacing=i' => \$args{spacing},
            'h|help'      => \$args{help},
            'man'         => \$args{man})
