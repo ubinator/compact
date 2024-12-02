@@ -1,0 +1,3 @@
+you should probs use /opt/bin for install directory for this, seems reasonable based on what I researched online. And it seems like the best way to stay out of the way of the multiple package managers on the system.
+
+Also add makefile that does a bullet-proof install of the compact executable into the /opt/bin folder, for ease-of-use so you don't have to copy it everytime and then check that everythings good, the makefile makes it a little bit easier.
