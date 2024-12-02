@@ -1,0 +1,108 @@
+#!/bin/perl
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use Pod::Usage;
+use Term::ReadKey;
+
+
+my %args = (
+	spacing => 2,
+	help => 0,
+	man => 0
+);
+
+Getopt::Long::Configure("bundling");
+GetOptions('s|spacing=i' => \$args{spacing},
+           'h|help'      => \$args{help},
+           'man'         => \$args{man})
+or pod2usage(2);
+
+pod2usage(-exitval => 0, -verbose => 2) if $args{man};
+pod2usage(0) if $args{help};
+
+sub sorry_boss($$) {
+	my ($exit_code, $msg) = @_;
+	print STDERR "$0: ERROR: $msg\n";
+	exit $exit_code;
+}
+
+sorry_boss 2, "negative num not allowed for spacing (-s/--spacing)" if $args{spacing} < 0;
+
+
+# NOTE: we only use the first two of these, but full capture kept as reference
+my ($width_chars, $height_chars, $width_pixels, $height_pixels) = GetTerminalSize();
+
+my @lines;
+while (<STDIN>) { chomp; push @lines, $_; }
+
+my $max_line_length = 0;
+for (@lines) { $max_line_length = length if length > $max_line_length }
+
+# avoids divide-by-zero in the following lines in a reasonable way
+sorry_boss 1, "0 spacing and all-empty input lines not allowed" if $max_line_length == 0 and $args{spacing} == 0;
+
+my $entries_per_row = int(($width_chars + $args{spacing} - 1) / ($max_line_length + $args{spacing}));
+my $num_rows = int(@lines / $entries_per_row) + !!(@lines % $entries_per_row);
+
+for (my $y = 0; $y < $num_rows; $y++) {
+	for (my $x = 0; $x < $entries_per_row; $x++) {
+
+		# print spacing left of the column only if we're not on the first column
+		print(' 'x$args{spacing}) unless $x == 0;
+
+		# calculate source line index for this table cell and end this row if there is no corresponding source index
+		my $i = $x * $num_rows + $y;
+		last if $i >= @lines;
+
+		# print source line and fill out remaining table cell with spaces
+		print($lines[$i] . ' 'x($max_line_length - length $lines[$i]));
+
+	}
+
+	print "\n";
+}
+
+__DATA__
+
+=head1 NAME
+
+compact - list input to ls-style block list output converter
+
+=head1 SYNOPSIS
+
+compact [options]
+
+ Options:
+   -s/--spacing=<num>    spacing between columns (default: 2)
+   -h/--help             brief help message
+   --man                 full documentation
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-s/--spacing=<num>>
+
+Uses the specified spacing between columns when outputting. The default is 2. All columns have the same width, which is the length of the longest line in the input. On top of that, spacing is added between columns, which is specified with this option.
+
+EDGECASE: You can use a spacing of 0, in which case the columns are right next to each other, but this is only allowed if the column width is non-zero. Columns can have 0 width if every line in the input is empty. This case is accepted, transformed and outputted, just as any other case, but only if the spacing is non-zero. 0 column width + 0 spacing would amount to an infinitely small table and doesn't make sense to accept.
+
+=item B<-h/--help>
+
+# TODO: Fix Print typo in the official perldoc for Pod::Usage and probably Getopt::Long since there's a copy of it there as well.
+Prints a brief help message and exits.
+
+=item B<--man>
+
+Prints the manual page and exits.
+
+=back
+
+=head1 DESCRIPTION
+
+B<compact> accepts lines of input and produces folded output which makes much more optimal use of the terminal screen-realistate. The output looks similar to the output of the "ls" command.
+
+=cut
